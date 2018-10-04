@@ -26,12 +26,16 @@ Private Sub UserForm_Activate()
     WorkSlot_101.Caption = tim_OBJ.storeAvailabilityStatus_TXT(1)
     Workslot_103.Caption = tim_OBJ.storeNOInfomailStatus_TXT(1)
     Workslot_104.Caption = tim_OBJ.storeProblemreportStatus_TXT(1)
+    WorkSlot_205.Caption = "205 DIAMTR"
     WorkSlot_501.Caption = "501_"
+    WorkSlot_504.Caption = "504 SBG Auswertung"
     
     Rem color active workslot buttons
-    If tim_OBJ.storeAvailabilityStatus_TXT(2) > 0 Then Workslot_103.BackColor = &H808000
+    If tim_OBJ.storeAvailabilityStatus_TXT(2) > 0 Then WorkSlot_101.BackColor = &H808000
     If tim_OBJ.storeNOInfomailStatus_TXT(2) > 0 Then Workslot_103.BackColor = &H808000
     If tim_OBJ.storeProblemreportStatus_TXT(2) > 0 Then Workslot_104.BackColor = &H808000
+    
+    If benchmarkPerfMon_OBJ.storePerfMonitStatus_TXT(2) > "0" Then WorkSlot_504.BackColor = &H808000
     
     Rem color inactive workslot buttons
     Workslot_105.BackColor = &HE0E0E0
@@ -100,7 +104,7 @@ End Sub
 
 
 
-Private Sub WorkSlotButton_205_Click()
+Private Sub WorkSlot_205_Click()
 
     Call ThisOutlookSession.store_205_DIAMTR_xls
 
@@ -110,7 +114,15 @@ Rem Freitag _______________________________________________________________
 
 Private Sub WorkSlot_501_Click()
 
-    Call ThisOutlookSession.store_504_PerformanceMonitoring
+    'Call ThisOutlookSession.store_504_PerformanceMonitoring
     'Call benchmarkPerfMon_OBJ.storePerfMonitStatus_TXT
+
+End Sub
+
+Private Sub WorkSlot_504_Click()
+
+    'Call ThisOutlookSession.store_504_PerformanceMonitoring
+    Debug.Print "form_FN_TIM_Preparation.Workslot_504_Click Dim benchmarkPerfMon_OBJ As New report_TITANS_mediator"
+    Call benchmarkPerfMon_OBJ.storePerfMonitStatus_TXT
 
 End Sub

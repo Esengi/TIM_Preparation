@@ -16,16 +16,16 @@ Rem ----------------
 Rem verwendet 7zip als Software
 Rem Warum hier der Pfad zu "Program Files" auf Deutsch genannt werden MUSS
 Rem (sonst funktioniert das nicht)
-Rem ist mir noch immer nicht völlig verständlich
+Rem ist mir noch immer nicht vÃ¶llig verstÃ¤ndlich
 Private Const programm_PFAD As String = "C:\Programme\7-zip\"
 Rem ---------------------
 Private Const programm_NAME As String = "7z.exe "
-' was muss man eigentlich über einen Textfileimport genau wissen?
+' was muss man eigentlich Ã¼ber einen Textfileimport genau wissen?
 ' Dateipfad und -Name, sowie der Typ.
-Rem in dieser Variablen soll der Stagingpfad für den
+Rem in dieser Variablen soll der Stagingpfad fÃ¼r den
 Rem Workslot abgespeichert werden
-Rem dieser ist eine "nicht-bäh" globale Variable, da sie einmal gesetzt und dann
-Rem zur lebenszeit des Objekts nicht mehr verändert wird.
+Rem dieser ist eine "nicht-bÃ¤h" globale Variable, da sie einmal gesetzt und dann
+Rem zur lebenszeit des Objekts nicht mehr verÃ¤ndert wird.
 Private workslot_PATH As String
 Private domain_PFAD As String
 Rem -----------------------------
@@ -88,7 +88,7 @@ Dim statusmessage_TXT As String
     timeInventory_TXT = timeInventory_TXT & Month(date_ARG)
     If Day(date_ARG) < 10 Then timeInventory_TXT = timeInventory_TXT & "0"
     timeInventory_TXT = timeInventory_TXT & Day(date_ARG)
-    'der liefert noch gelegentlich ein "\" zurück
+    'der liefert noch gelegentlich ein "\" zurÃ¼ck
     'warum?
     textFileGenerated_Path = textFile_Path
     
@@ -113,8 +113,8 @@ Errorhandler:
 End Function
 
 Function textFileStaging_Path(sequence_IDX As Integer) As String
-Rem gibt einen Pfad aus der Stagingmatrix per index zurück
-Rem und prüft dabei auch das vorhandensein der Datei
+Rem gibt einen Pfad aus der Stagingmatrix per index zurÃ¼ck
+Rem und prÃ¼ft dabei auch das vorhandensein der Datei
 Rem im Filesystem
     Dim resultvalue_TXT As String
     
@@ -131,11 +131,11 @@ End Function
 
 Function textFileFullPath(workSlotPath_ARG As String, Optional domainPath_ARG As String, Optional discriminator_ARG As String, Optional workslot_ARG As edv_Workslot_handler, Optional checkExistence_ARG As Boolean = True) As String
     On Error GoTo Errorhandler
-    Rem zentrale öffentliche Funktion!
+    Rem zentrale Ã¶ffentliche Funktion!
     'wer verwendet das heute (08.03.2017) schon?
     '1. outlookFolder_wrapper
     '2. import_FBENCH_mediator
-    'weitere unterscheidung sollte sein: nur Pfad zurückgeben oder
+    'weitere unterscheidung sollte sein: nur Pfad zurÃ¼ckgeben oder
     'kontrollieren, ob datei auch vorhanden ist!
     Dim resultvalue_TXT As String
     Dim search_PATH As String
@@ -150,8 +150,8 @@ Function textFileFullPath(workSlotPath_ARG As String, Optional domainPath_ARG As
     Discriminator_TXT = discriminator_ARG
     Rem Aufbau Suchpfad
     resultvalue_TXT = textFile_Path & textFile_Name
-    'durch "IsNotExisting prüfen lassen, wenn schon...
-    'wird wohl nicht mehr nötig sein, da funktionalität schon von woanders übernommen...
+    'durch "IsNotExisting prÃ¼fen lassen, wenn schon...
+    'wird wohl nicht mehr nÃ¶tig sein, da funktionalitÃ¤t schon von woanders Ã¼bernommen...
     If checkExistence_ARG Then resultvalue_TXT = FilenameBySearchstring(textFile_Path, discriminatorPosition_INT, discriminator_ARG)
     'Call IsNotExisting("", "")
     textFileFullPath = resultvalue_TXT
@@ -165,61 +165,10 @@ Errorhandler:
         
 End Function
 
+Rem ________________________________
+Rem zipFunktionen sollten im mserv_zipFile_wrapper abgehandelt werden            
 
 
-Function unzippedPathName(zipfiletrunk_ARG As String, Optional workSlotPath_ARG As String) As String
-On Error GoTo Errorhandler
-Rem wie debuggen?
-Rem Call GetUnzippedTextfile("1610100000_RawData_LA_TE_WEEK")
-Rem ---------------------------------------
-Rem wird verwendet:
-    Const zipFileExtension_TXT As String = ".zip"
-    Dim zipFileExisting_FLAG As Boolean
-    Dim unzipFolderNotExisting_FLAG As Boolean
-    Dim command_NAME As String
-    Dim shellcommand_TXT As String
-    Dim unZipFolder_NAME As String
-    Dim resultvalue_DBL As Double
-    Rem initialisierungen
-    unzippedPathName = "<unzipError>"
-    zipFileExisting_FLAG = False
-    unzipFolderNotExisting_FLAG = False
-    resultvalue_DBL = -9999
-    If workSlotPath_ARG <> "" Then workslot_PATH = workSlotPath_ARG
-    unZipFolder_NAME = staging_PFAD & workslot_PATH & zipfiletrunk_ARG
-    Rem initialisierungen Ende
-    unzipFolderNotExisting_FLAG = IsNotExisting(zipfiletrunk_ARG)
-    If unzipFolderNotExisting_FLAG Then
-        command_NAME = "e " & staging_PFAD & workslot_PATH
-        command_NAME = command_NAME & zipfiletrunk_ARG & zipFileExtension_TXT
-        Rem -oC: MUSS zusammengeschrieben werden!
-        command_NAME = command_NAME & " -o" & unZipFolder_NAME
-        shellcommand_TXT = programm_PFAD & programm_NAME & command_NAME
-    End If
-    Rem
-    zipFileExisting_FLAG = Not IsNotExisting(zipfiletrunk_ARG & zipFileExtension_TXT)
-    If zipFileExisting_FLAG And unzipFolderNotExisting_FLAG Then
-        resultvalue_DBL = runShell(shellcommand_TXT)
-    End If
-    Rem
-    unzipFolderNotExisting_FLAG = IsNotExisting(zipfiletrunk_ARG)
-    
-Errorhandler:
-
-If (Err.Number <> 0) Or unzipFolderNotExisting_FLAG Then
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.Err.Number=" & Err.Number
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.Err.Description=" & Err.Description
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.resultvalue_DBL=" & resultvalue_DBL
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.unzipFolderNotExisting_FLAG=" & unzipFolderNotExisting_FLAG
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.zipFileExisting_FLAG=" & zipFileExisting_FLAG
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.zipfiletrunk_ARG=" & zipfiletrunk_ARG
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.workSlotPath_ARG=" & workSlotPath_ARG
-    Debug.Print "edv_Textfileimport_wrapper.GetUnzippedTextfile.shellcommand_TXT=" & shellcommand_TXT
-End If
-
-unzippedPathName = unZipFolder_NAME
-
-End Function
 
 
 
@@ -270,7 +219,7 @@ Dim appendix_TXT As String
     'VBA.FileSystem.ChDir (rawfilepfad_ARG)
     Rem C:\PROGRA~2\COMMON~1\MICROS~1\VBA\VBA7.1\VBE7.DLL
     Rem FileCopy kann nur einzelne Dateien kopieren, keine Verzeichnisse!
-    Rem für die Verwendung mit Verzeichnissen wäre MkDir das korrekte Property
+    Rem fÃ¼r die Verwendung mit Verzeichnissen wÃ¤re MkDir das korrekte Property
     Call VBA.FileSystem.FileCopy(staging_PFAD & rawfilepfad_ARG, staging_PFAD & sourcefilepfad_ARG & appendix_TXT)
     resultvalue_TXT = sourcefilepfad_ARG & appendix_TXT
 
@@ -291,10 +240,10 @@ End Function
 
 Private Function workslotPathByWorkslot(workslot_ARG As edv_Workslot_handler, Optional index_ARG As Integer = 0) As String
 On Error GoTo Errorhandler
-    Rem hat die Fähigkeit einen Pfad anhand des Workslots zu suchen
+    Rem hat die FÃ¤higkeit einen Pfad anhand des Workslots zu suchen
     Rem wichtige Funktion
     Rem allerdings: sind die Argumente in der Funktion eigentlich noch notwendig?
-    Rem denn: ein Textfileimport muß nicht mehr als einen Workslot kennen...
+    Rem denn: ein Textfileimport muÃŸ nicht mehr als einen Workslot kennen...
     
     Const file_ATT As Integer = vbDirectory
     Dim search_TXT As String
@@ -310,7 +259,7 @@ On Error GoTo Errorhandler
 
     
 Errorhandler:
-'Fehlerbehandlung einfügen!
+'Fehlerbehandlung einfÃ¼gen!
 If Err.Number <> 0 Then
     Debug.Print "edv_Textfileimport_wrapper.workslotPathByWorkslot.index_ARG=" & index_ARG
     Debug.Print "edv_Textfileimport_wrapper.workslotPathByWorkslot.staging_PFAD=" & staging_PFAD & search_TXT
@@ -356,7 +305,7 @@ Errorhandler:
 End Function
 
 Private Function textFile_Name(Optional stagingIndex_ARG As Integer = 0) As String
-Rem hat die Aufgabe, das gewünschte Format des Dateinamens festzulegen
+Rem hat die Aufgabe, das gewÃ¼nschte Format des Dateinamens festzulegen
 'domain_PFAD richtig handlen!
 On Error GoTo Errorhandler
     Const separator_CHR As String = "-"
@@ -396,7 +345,7 @@ End Function
 Private Function IsNotExisting(filename_ARG As String, Optional workSlotPath_ARG As String = "") As Boolean
 Rem Parameter filename_ARG: ein Dateiname, z.B. "inventur.txt", aber kein ganzer Pfad
 Rem Parameter workSlotPath_ARG:
-Rem die Funktion gibt ein False zurück, wenn die Datei filename_ARG gefunden wird.
+Rem die Funktion gibt ein False zurÃ¼ck, wenn die Datei filename_ARG gefunden wird.
 Rem
 'wer ruft sie auf:
 'a) unzippedPathName
@@ -417,7 +366,7 @@ On Error GoTo Errorhandler
     rawfile_NAME = ""
     file_ATT = vbDirectory
     workSlotFull_PATH = staging_PFAD & workslot_PATH
-    'sollte eigentlich nicht nötig sein. Die Klasse sollte zu diesem Zeitpunkt
+    'sollte eigentlich nicht nÃ¶tig sein. Die Klasse sollte zu diesem Zeitpunkt
     'den Workslot Pfad schon kennen und gesetzt haben:
     statusmessage_TXT = "<checking for workSlotPath_ARG>"
     If workSlotPath_ARG <> "" Then workSlotFull_PATH = staging_PFAD & workSlotPath_ARG
@@ -529,7 +478,7 @@ Private Sub Class_Initialize()
     stagingFiles_CNT = 0
     'formatstring_TXT = "Fixed"
     Call reset_stagingfilematrix
-    Rem welche mediatoren verwenden überhaupt Textfiles, also z.B. .txt und .csv?
+    Rem welche mediatoren verwenden Ã¼berhaupt Textfiles, also z.B. .txt und .csv?
     Rem kommen diese Textfiles aus
     Rem     a) e-mails?
     Rem     b) ftp-downloads

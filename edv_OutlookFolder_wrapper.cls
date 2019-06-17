@@ -54,6 +54,7 @@ Dim source_OBJ As MailItem
 Rem für das finden des richtigen Attachments sind nützlich:
 Rem das Datum an dem die Mail ankam
 Dim cr_DAT As Date
+Dim date_PFX As String
 Rem der Betreff der Mail
 Dim mySubject_TXT As String
 Rem der Name des Attachments:
@@ -62,6 +63,8 @@ Rem anzahl gefundener neuer Mails
 Dim newMail_CNT As Integer
 Dim fileSequence_IDX As Integer
 Dim IsNoAttachment_FLAG As Boolean
+Dim SaveMailBody_FLAG As Boolean
+Dim UseTime_FLAG As Boolean
 
 Const debug_FLAG As Boolean = False
 
@@ -70,6 +73,14 @@ On Error GoTo Errorhandler
     newMail_CNT = -1
     fileSequence_IDX = 0
     IsNoAttachment_FLAG = True
+    Rem ---------------------------------------------------------------------------------------------------------
+    Rem Zwei neue Flags für die Nutzung mit Mails, die a) häufiger am Tag kommen und b) wo der Inhalt wichtiger ist
+    Rem als das Attachment (weil z.B. keines vorhanden)
+    SaveMailBody_FLAG = True
+    Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.SaveMailBody_FLAG=" & SaveMailBody_FLAG
+    UseTime_FLAG = True
+    Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.UseTime_FLAG=" & UseTime_FLAG
+    
     Set resultvalue_OBJ = Nothing
 
     If (myWorkfolder Is Nothing) Then
@@ -89,15 +100,25 @@ On Error GoTo Errorhandler
         Set source_OBJ = NewMailFromFolder(myWorkfolder, Not keepMailAsUnread)
 
         cr_DAT = source_OBJ.CreationTime
+        date_PFX = Left(cr_DAT, 2) & Mid(cr_DAT, 4, 2) & Mid(cr_DAT, 12, 2) & Mid(cr_DAT, 15, 2)
         mySubject_TXT = source_OBJ.Subject
-        Debug.Print source_OBJ.Body
-        Call source_OBJ.SaveAs("C:\Users\Public\Documents\507\" & Left(cr_DAT, 5) & ".txt", olTXT)
         IsNoAttachment_FLAG = (source_OBJ.Attachments.Count = 0)
+        
+        Rem : Funktion zum abspeichern des Mailinhalts als Text
+        If SaveMailBody_FLAG Then
+            'Das hier speichert als reinen Text. Problematisch mit html mails
+            'Call source_OBJ.SaveAs("C:\Users\Public\Documents\507\" & Left(cr_DAT, 5) & ".txt", olTXT)
+            CreateObject("scripting.filesystemobject").createtextfile("C:\Users\Public\Documents\507\Errormails\" & date_PFX & ".txt").Write source_OBJ.Body
+        End If
+        
+        
         
     Rem bis hier sind die funktionen sehr ähnlich.
     Rem ___________________________________________________________________________________________________________
         
-        myfilename_TXT = source_OBJ.Attachments.Item(1).FileName
+        If Not IsNoAttachment_FLAG Then
+            myfilename_TXT = source_OBJ.Attachments.Item(1).FileName
+        
     Rem der textFileFullPath liefert nur ohne den staging pfad
         'myfilename_TXT = resultvalue_OBJ.textFileFullPath(workSlot_ARG) & myfilename_TXT
     
@@ -106,10 +127,11 @@ On Error GoTo Errorhandler
     Rem diese Funktion generiert Dateinamen nach einem intelligenten Scheam
     Rem generell ist das eine gute Idee, aber für den Fall, daß das Attachment noch gezippt ist, wäre das problematisch.
     Rem der Textfileimport_wrapper betreibt eine eigene Stagingmatrix.
-        If Right(myfilename_TXT, 3) = "txt" Then myfilename_TXT = resultvalue_OBJ.textFileGenerated_Path(workSlot_ARG, fileSequence_IDX, cr_DAT)
+            If Right(myfilename_TXT, 3) = "txt" Then myfilename_TXT = resultvalue_OBJ.textFileGenerated_Path(workSlot_ARG, fileSequence_IDX, cr_DAT)
         
-        Call source_OBJ.Attachments.Item(1).SaveAsFile(myfilename_TXT)
-   'todo: Funktion zum abspeichern des Mailinhalts als Text
+            Call source_OBJ.Attachments.Item(1).SaveAsFile(myfilename_TXT)
+        End If
+
             
     Next fileSequence_IDX
     
@@ -118,15 +140,15 @@ Errorhandler:
         Debug.Print "edv_OutlookFilder_wrapper.source_OBJ.SenderName=" & source_OBJ.SenderName
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.IsNoAttachment_FLAG=" & IsNoAttachment_FLAG
 
-If Err.Number <> 0 Then
-    Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Number=" & Err.Number
-    Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Description=" & Err.Description
-    Debug.Print "edv_OutlookFolder_wrapper.TextfileImportFromWorkslot.newMail_CNT=" & newMail_CNT
-    Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.cr_DAT=" & cr_DAT
-    Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.newMail_IDX=" & fileSequence_IDX & " out of " & newMail_CNT
-    Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.source_OBJ.Attachments.Count=" & source_OBJ.Attachments.Count
-    Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.source_OBJ.Attachments.myfilename_TXT=" & myfilename_TXT
-End If
+    If Err.Number <> 0 Then
+        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Number=" & Err.Number
+        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Description=" & Err.Description
+        Debug.Print "edv_OutlookFolder_wrapper.TextfileImportFromWorkslot.newMail_CNT=" & newMail_CNT
+        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.cr_DAT=" & cr_DAT
+        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.newMail_IDX=" & fileSequence_IDX & " out of " & newMail_CNT
+        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.source_OBJ.Attachments.Count=" & source_OBJ.Attachments.Count
+        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.source_OBJ.Attachments.myfilename_TXT=" & myfilename_TXT
+    End If
 
     Set TextfileImportFromWorkslot = resultvalue_OBJ
 

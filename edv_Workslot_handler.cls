@@ -62,6 +62,7 @@ Rem die der "Serviceprovider ID" entspricht
      
 Errorhandler:
 
+    Debug.Print "edv_Workslot_handler.AddDomain.debug_FLAG=" & debug_FLAG
     If Err.Number <> 0 Or debug_FLAG Then
         Debug.Print "edv_Workslot_handler.AddDomain.domain_ARG=" & domain_ARG
         Debug.Print "edv_Workslot_handler.domains_CNT=" & domains_CNT
@@ -291,6 +292,8 @@ End Sub
 
 Private Sub Class_Terminate()
 
-    Debug.Print "edv_Workslot_handler.debug_FLAG=" & debug_FLAG
+
+    Debug.Print "edv_Workslot_handler.Class_Terminate"
+    Debug.Print "edv_Workslot_handler.Class_Terminate.debug_FLAG=" & debug_FLAG
 
 End Sub

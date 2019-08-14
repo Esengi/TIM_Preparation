@@ -9,17 +9,19 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 Rem diese Klasse hat vor allem die Aufgabe, die zusammengehörigen Workslots zu bündeln
-Private workAvailability As New edv_Workslot_handler
-Private workCCHWeekly As New edv_Workslot_handler
-Private workNOInfomail As New edv_Workslot_handler
-Private workProblemreport As New edv_Workslot_handler
+Private workSIN_Einzelmails_OBJ As New edv_Workslot_handler
+' workAvailability As New edv_Workslot_handler
+
+'Private workCCHWeekly As New edv_Workslot_handler
+'Private workNOInfomail As New edv_Workslot_handler
+'Private workProblemreport As New edv_Workslot_handler
 Rem
 Rem Funktionell gibt sie an eine aufrufende Prozedur
 Rem oder Formular
 Rem Stautusmessages zu dem ab, was sie so gerade gemacht hat
 Rem
 Private outlookFolder_OBJ As New edv_OutlookFolder_wrapper
-Private logger_OBJ As New edv_Control_wrapper
+'Private logger_OBJ As New edv_Control_wrapper
 Private Enum execution_IDX
  justexecute = 0
  returnlabel = 1
@@ -31,6 +33,36 @@ Private statusmessage_TXT As String
 Private Const debug_FLAG As Boolean = True
 
 Rem _________
+
+Public Function SIN_Status_TXT(Optional execution_ARG As Integer = 0) As String
+
+On Error GoTo Errorhandler
+
+Dim resultvalue_TXT As String
+Dim result_OBJ As New edv_Textfileimport_wrapper
+Dim unlinkedText_OBJ As New edv_UnlinkedTextfiles_wrapper
+
+   
+    Set result_OBJ = outlookFolder_OBJ.TextfileImportFromWorkslot(workSIN_Einzelmails_OBJ)
+    
+    Debug.Print "report_TIM_FV_mediator.SIN_Status_TXT.result_OBJ.newMail_FLAG=" & result_OBJ.newMail_FLAG
+    Debug.Print "report_TIM_FV_mediator.SIN_Status_TXT.result_OBJ.textFileStaging_Path(1)=" & result_OBJ.textFileStaging_Path(1).Staging_PATH
+    
+    
+Errorhandler:
+    
+    If Err.Number <> 0 Or debug_FLAG Then
+    
+        Debug.Print "report_TIM_FV_mediator.SIN_Status_TXT.Now()=" & Now()
+        Debug.Print "report_TIM_FV_mediator.SIN_Status_TXT.Err.Number=" & Err.Number
+        Debug.Print "report_TIM_FV_mediator.SIN_Status_TXT.Err.Description=" & Err.Description
+        Debug.Print "report_TIM_FV_mediator.SIN_Status_TXT.Err.resultvalue_TXT=" & resultvalue_TXT
+        
+    End If
+
+    SIN_Status_TXT = resultvalue_TXT
+
+End Function
 
 Public Function storeAvailabilityStatus_TXT(Optional execution_ARG As Integer = 0) As String
 
@@ -278,12 +310,17 @@ End Function
 Private Sub Class_Initialize()
 
     statusmessage_TXT = ""
-    Call workAvailability.Workslotindex(vbMonday, 1)
-    Call workCCHWeekly.Workslotindex(vbMonday, 2)
-    Call workNOInfomail.Workslotindex(vbMonday, 3)
-    Call workProblemreport.Workslotindex(vbMonday, 4)
-    Debug.Print "report_TIM_FV_mediator.Initialize.Now()=" & Now()
-    Debug.Print "report_TIM_FV_mediator.Initialize.debug_FLAG=" & debug_FLAG
+    
+    Call workSIN_Einzelmails_OBJ.Workslotindex(vbMonday, 6)
+    'Call workAvailability.Workslotindex(vbMonday, 1)
+    'Call workCCHWeekly.Workslotindex(vbMonday, 2)
+    'Call workNOInfomail.Workslotindex(vbMonday, 3)
+    'Call workProblemreport.Workslotindex(vbMonday, 4)
+    
+    If debug_FLAG Then
+        Debug.Print "report_TIM_FV_mediator.Initialize.Now()=" & Now()
+        Debug.Print "report_TIM_FV_mediator.Initialize.debug_FLAG=" & debug_FLAG
+    End If
 End Sub
 
 Private Sub Class_Terminate()
@@ -297,3 +334,4 @@ Errorhandler:
         Debug.Print "report_TIM_FV_mediator.Class_Terminate=Done!"
     End If
 End Sub
+

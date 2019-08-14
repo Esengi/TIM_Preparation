@@ -13,12 +13,14 @@ Rem verwendet VBA.FileSystem
 Private Const explorer_PFAD As String = "C:\Windows\explorer.exe"
 Private Const stagingRoot_PFAD As String = "C:\Users\Public\Documents\"
 Private Const oneDriveRoot_PFAD As String = "C:\Users\gruenern\OneDrive for Business\"
+Private workSlot_OBJ As New edv_Workslot_handler
+
 Private fullStaging_PFAD As String
 Private stagingFile_NAME(28) As String
 Private stagingFilesCount_INT As Integer
 
-Private Const debug_FLAG As Boolean = False
-'Private Const debug_FLAG As Boolean = True
+'Private Const debug_FLAG As Boolean = False
+Private Const debug_FLAG As Boolean = True
 
 Rem -------------------------------------------------
 
@@ -26,13 +28,14 @@ Public Sub debug_me()
 
     Rem Testverzeichnisse
 
-    Dim fileSystem_OBJ As New Scripting.FileSystemObject
+    Dim filesystem_OBJ As New Scripting.FileSystemObject
     Dim folder_OBJ As Scripting.Folder
     Dim test_PATH As String
     
+        
     Rem zuweisungen
     'test_PATH = oneDriveRoot_PFAD & "5041_SBGBGF\zipfiles"
-    test_PATH = oneDriveRoot_PFAD & "5041_SBGBGF\textfiles"
+    test_PATH = oneDriveRoot_PFAD & "5051_CALL_Accessibility\textfiles"
     
     fullStaging_PFAD = test_PATH
         
@@ -40,15 +43,12 @@ Debug.Print "edv_FilesystemFolder_wrapper.debug_me"
 Debug.Print "edv_FilesystemFolder_wrapper.debug_FLAG=" & debug_FLAG
 Debug.Print "edv_FilesystemFolder_wrapper.debug_me.test_PATH=" & test_PATH
     
-    Call IsBatchRun("5041_SBGBGF.bat")
+    'Call IsBatchRun("5041_SBGBGF.bat")
     
-    Set folder_OBJ = fileSystem_OBJ.GetFolder(test_PATH)
-    
-    Debug.Print "edv_FilesystemFolder_wrapper.debug_me.folder_OBJ.Files.Count=" & folder_OBJ.Files.Count
-    'die items im folder lassen sich nicht über den Zahlindex aufrufen. da muss man wohl selber was basteln...
-    Debug.Print "edv_FilesystemFolder_wrapper.debug_me.folder_OBJ.Files.Item(1).DateCreated" & folder_OBJ.Files.Item("sbg_dsltest.20190310.txt.gz").DateCreated
 
-
+        
+    'Test mit existierendem Verzeichnis
+    Debug.Print "edv_FilesystemFolder_wrapper.IsExisting(\SBGBGF=" & IsExisting("C:\Users\Public\Documents\504_FBENCH_perfMonitoring\SBGBGF")
     'Test mit existierendem Verzeichnis
     Debug.Print "edv_FilesystemFolder_wrapper.IsExisting(\SBGBGF=" & IsExisting("C:\Users\Public\Documents\504_FBENCH_perfMonitoring\SBGBGF")
     'Test mit NICHT existierendem Verzeichnis
@@ -111,8 +111,8 @@ Errorhandler:
 If debug_FLAG Or Err.Number <> 0 Then
 
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH()"
-    Debug.Print "edv_FilesystemFolder_wrapper.Err.Number=" & Err.Number
-    Debug.Print "edv_FilesystemFolder_wrapper.Err.Description=" & Err.Description
+    Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.Err.Number=" & Err.Number
+    Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.Err.Description=" & Err.Description
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.resultvalue_TXT=" & resultvalue_TXT
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.fullStaging_PFAD=" & fullStaging_PFAD
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.directoryname_TXT=" & directoryname_TXT
@@ -177,6 +177,8 @@ Dim resultvalue_DBL As Double
 
 Debug.Print "IsBatchRun.fullStaging_PFAD=" & fullStaging_PFAD
 
+'Call Shell("powershell -noexit -file ""C:\Users\gruenern\OneDrive for Business\5041_SBGBGF\textfiles\5041_SBGBGF.ps1", 1)
+
 path_var = ""
 path_var = path_var & fullStaging_PFAD
 path_var = path_var & "\"
@@ -191,26 +193,50 @@ path_var = path_var & scriptname_ARG & " "
 Errorhandler:
 
 If Err.Number <> 0 Then
-    Debug.Print "IsBatchRun.Err.Description=" & Err.Description
-    Debug.Print "path_var=" & path_var
+    Debug.Print "edv_FilesystemFolder_wrapper.IsBatchRun.Err.Description=" & Err.Description
+    Debug.Print "edv_FilesystemFolder_wrapper.path_var=" & path_var
 End If
 
 End Function
 
-Function IsCleanup(cleanuptarget_ARG As String) As Boolean
+Function IsCleanup(cleanupCut_DATE As Date) As Boolean
 
 On Error Resume Next
 
     Dim wildcards_TXT As String
+    Dim cleanuptarget_ARG As String
+    Dim isWildcarded_FLAG As Boolean
     
     wildcards_TXT = ""
+    cleanuptarget_ARG = ""
+
+    If cleanupCut_DATE < "01.01.2019" Then isWildcarded_FLAG = True
     
+    Set folder_OBJ = filesystem_OBJ.GetFolder(test_PATH)
+    
+    Debug.Print "edv_FilesystemFolder_wrapper.debug_me.folder_OBJ.Files.Count=" & folder_OBJ.Files.Count
+
+    For Each File In folder_OBJ.Files
+    
+        Debug.Print File.Name
+        Debug.Print File.DateCreated
+    
+    Next
+        
     If Right(cleanuptarget_ARG, 1) <> "*" Then
         wildcards_TXT = "\*.*"
     End If
 
-    VBA.FileSystem.Kill (staging_PFAD & cleanuptarget_ARG & wildcards_TXT)
-    VBA.FileSystem.RmDir (staging_PFAD & cleanuptarget_ARG)
+    'VBA.FileSystem.Kill (staging_PFAD & cleanuptarget_ARG & wildcards_TXT)
+    'VBA.FileSystem.RmDir (staging_PFAD & cleanuptarget_ARG)
+    
+    
+    Debug.Print "edv_FilesystemFolder_wrapper.On Error Resume Next"
+    Debug.Print "edv_FilesystemFolder_wrapper.IsCleanup.cleanuptarget_ARG=" & cleanuptarget_ARG
+    Debug.Print "edv_FilesystemFolder_wrapper.IsCleanup.wildcards_TXT=" & wildcards_TXT
+    Debug.Print "edv_FilesystemFolder_wrapper.IsCleanup.cleanuptarget_ARG=" & cleanuptarget_ARG
+    
+    IsCleanup = True
 
 End Function
 
@@ -227,18 +253,21 @@ Dim isDefault_FLAG As Boolean
 
 Const defaultResult_TXT As String = "5041_SBGBGF\"
 
+
+    resultvalue_TXT = defaultResult_TXT
     isDefault_FLAG = True
 
     kategorie_INT = workSlot_ARG.Workslotindex
 
     VBA.FileSystem.ChDir (oneDriveRoot_PFAD & "\")
     'VBA.FileSystem.ChDir (rawfile_PFAD)
-    resultvalue_TXT = Dir(oneDriveRoot_PFAD & "\" & "504" & "*", vbDirectory)
-
-    resultvalue_TXT = "5041_SBGBGF\"
+    
+    resultvalue_TXT = Dir(oneDriveRoot_PFAD & "\" & kategorie_INT & "*", vbDirectory)
+    isDefault_FLAG = False
+    
     'If (fullStaging_PFAD = "") And (workSlot_ARG.Domain_TXT(1) <> "") Then
     If (workSlot_ARG.domain_TXT(1) <> "") And Not workSlotOnly_ARG Then
-        resultvalue_TXT = resultvalue_TXT & workSlot_ARG.domain_TXT(1)
+        resultvalue_TXT = resultvalue_TXT & "\" & workSlot_ARG.domain_TXT(1)
     End If
 
 Errorhandler:
@@ -278,10 +307,12 @@ fullStaging_PFAD = ""
 
 Debug.Print "edv_FilesystemFolder_wrapper.Class_Initialize"
 Debug.Print "edv_FilesystemFolder_wrapper.debug_FLAG=" & debug_FLAG
-Debug.Print "edv_FilesystemFolder_wrapper.stagingRoot_PFAD=" & stagingRoot_PFAD
-Debug.Print "edv_FilesystemFolder_wrapper.oneDriveRoot_PFAD=" & oneDriveRoot_PFAD
-Debug.Print "edv_FilesystemFolder_wrapper.stagingFilesCount_INT=" & stagingFilesCount_INT
-Debug.Print "edv_FilesystemFolder_wrapper.fullStaging_PFAD=" & fullStaging_PFAD
+If debug_FLAG Then
+    Debug.Print "edv_FilesystemFolder_wrapper.stagingRoot_PFAD=" & stagingRoot_PFAD
+    Debug.Print "edv_FilesystemFolder_wrapper.oneDriveRoot_PFAD=" & oneDriveRoot_PFAD
+    Debug.Print "edv_FilesystemFolder_wrapper.stagingFilesCount_INT=" & stagingFilesCount_INT
+    Debug.Print "edv_FilesystemFolder_wrapper.fullStaging_PFAD=" & fullStaging_PFAD
+End If
 
 End Sub
 

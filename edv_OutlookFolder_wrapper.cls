@@ -12,7 +12,6 @@ Rem _______________________________________________________________________
 Rem http://msdn.microsoft.com/en-us/library/office/ff865587(v=office.14).aspx
 
 Option Explicit
-'mal prüfen, ob diese variablen noch alle benötigt werden!
 Rem wird aktuell noch verwendet
 Private user_NAME As String
 Private folderhierarchy_MTX(3) As String
@@ -27,23 +26,38 @@ Rem diese Variable sollte im initialize gesetzt werden
 Private myRootfolder As MAPIFolder
 Private myWorkfolder As MAPIFolder
 Private objMail As MailItem
-Private newMailsInFolder_INT As Integer
 Rem das konzept ist allerdings schon etwas älter:
 Private stagingFileName_TXT(28) As String
 Rem ______________________________________________________________________
 Rem Konstanten
 Private Const keepMailAsUnread As Boolean = True
 Private Const debug_FLAG As Boolean = True
-
+Private Const version_DBL = 3
+Rem öffentliche Variablen
+Public moduleversion_INT As Integer
+Public newMailInFolder_INT As Integer
 'verwendung?
 Public newattachments_INT As Integer
+
 
 Rem _________________________________________________
 Rem Public Functions
 
+Public Sub debug_me()
 
+    Dim result_OBJ As Object
+    Dim debugWS_OBJ As New edv_Workslot_handler
+    
+    Call debugWS_OBJ.Workslotindex(vbWednesday, 4)
+    Call TextfileImportFromWorkslot(debugWS_OBJ)
+    
+    If result_OBJ Is Nothing Then Debug.Print "result_OBJ=Nothing"
+        
+    Debug.Print "debug_me"
 
-Public Function TextfileImportFromWorkslot(workSlot_ARG As edv_Workslot_handler) As edv_Textfileimport_wrapper
+End Sub
+
+Public Function TextfileImportFromWorkslot(workSlot_ARG As edv_Workslot_handler, Optional execution_ARG As Integer = 9) As edv_Textfileimport_wrapper
 Rem Diese Funktion ist sinnvoll, wenn Textdateien weiterverabeitet werden sollen
 Rem daher sollte sie ausführlich verwendet werden
 Rem zB .txt und .csv
@@ -59,28 +73,27 @@ Rem der Betreff der Mail
 Dim mySubject_TXT As String
 Rem der Name des Attachments:
 Dim myfilename_TXT As String
-Rem anzahl gefundener neuer Mails
-Dim newMail_CNT As Integer
+Rem
+Dim mailBodyText_PATH As String
 Dim fileSequence_IDX As Integer
 Dim IsNoAttachment_FLAG As Boolean
 Dim SaveMailBody_FLAG As Boolean
 Dim UseTime_FLAG As Boolean
 
-Const debug_FLAG As Boolean = False
-
 On Error GoTo Errorhandler
+
+    
     Rem initialize variables:
-    newMail_CNT = -1
     fileSequence_IDX = 0
     IsNoAttachment_FLAG = True
-    Rem ---------------------------------------------------------------------------------------------------------
-    Rem Zwei neue Flags für die Nutzung mit Mails, die a) häufiger am Tag kommen und b) wo der Inhalt wichtiger ist
-    Rem als das Attachment (weil z.B. keines vorhanden)
-    SaveMailBody_FLAG = True
-    Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.SaveMailBody_FLAG=" & SaveMailBody_FLAG
-    UseTime_FLAG = True
-    Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.UseTime_FLAG=" & UseTime_FLAG
+    SaveMailBody_FLAG = False
     
+    Rem ---------------------------------------------------------------------------------------------------------
+    Rem die steuerung dessen, was in dieser Funktion passiert, wird vom execution_ARG übernommen
+    Rem execution_ARG = 0: nur auf neue Mails prüfen
+    Rem execution_ARG = 1: auf neue Mails mit attachment prüfen
+    Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.execution_ARG=" & execution_ARG
+
     Set resultvalue_OBJ = Nothing
 
     If (myWorkfolder Is Nothing) Then
@@ -88,35 +101,49 @@ On Error GoTo Errorhandler
         Set myWorkfolder = WorkslotFolder_OBJ(workSlot_ARG)
     End If
     
+    Rem ---------------------------------------------------------------------------------------------------------
+    Rem Zwei neue Flags für die Nutzung mit Mails, die a) häufiger am Tag kommen und b) wo der Inhalt wichtiger ist
+    Rem als das Attachment (weil z.B. keines vorhanden)
+    Rem wird nur benötigt, wenn eine speicherung erwartet wird (execution ARG größer 1)
+    If execution_ARG > 1 Then
+        SaveMailBody_FLAG = True
+        UseTime_FLAG = True
+    End If
+    
+    Rem Hinweis: Wenn keine neuen Mails vorhanden sind, läuft die Schleife nicht durch, sondern wirft
+    Rem sofort einen Fehler.
+    Rem dieser wird dann im Errorhandler bewertet und darauf reagiert
     Rem wenn bei den Discriminatoren kein Preset aufaddiert wurde,
     Rem läuft die Schleife genau über die Anzahl der gefundenen Mails
-    newMail_CNT = newMail_CNT + myWorkfolder.UnReadItemCount + workSlot_ARG.PresetFile_CNT
-    Debug.Print "edv.OutlookFolder_wrapper.StoreAttachment.newMail_CNT=" & newMail_CNT
-    Debug.Print "edv.OutlookFolder_wrapper.StoreAttachment.newMailsInFolder_INT+1=" & newMailsInFolder_INT + 1
-    
-    
-    For fileSequence_IDX = 0 To newMail_CNT
+    For fileSequence_IDX = 1 To newMailInFolder_INT + workSlot_ARG.PresetFile_CNT
 
         Set source_OBJ = NewMailFromFolder(myWorkfolder, Not keepMailAsUnread)
 
         cr_DAT = source_OBJ.CreationTime
-        date_PFX = Left(cr_DAT, 2) & Mid(cr_DAT, 4, 2) & Mid(cr_DAT, 12, 2) & Mid(cr_DAT, 15, 2)
+    Rem Datumsreihenfolge im Prefix: MMDD
+        date_PFX = Mid(cr_DAT, 4, 2) & Left(cr_DAT, 2)
+        date_PFX = date_PFX & Mid(cr_DAT, 12, 2) & Mid(cr_DAT, 15, 2)
         mySubject_TXT = source_OBJ.Subject
         IsNoAttachment_FLAG = (source_OBJ.Attachments.Count = 0)
+        'das hier näher analysieren
+        'Call resultvalue_OBJ.textFileGenerated_Path(workSlot_ARG)
+        mailBodyText_PATH = resultvalue_OBJ.textFileGenerated_Path(workSlot_ARG)
         
         Rem : Funktion zum abspeichern des Mailinhalts als Text
         If SaveMailBody_FLAG Then
             'Das hier speichert als reinen Text. Problematisch mit html mails
             'Call source_OBJ.SaveAs("C:\Users\Public\Documents\507\" & Left(cr_DAT, 5) & ".txt", olTXT)
-            CreateObject("scripting.filesystemobject").createtextfile("C:\Users\Public\Documents\507\Errormails\" & date_PFX & ".txt").Write source_OBJ.Body
+            CreateObject("scripting.filesystemobject").CreateTextFile("C:\Users\Public\Documents\304_CT2020_FixedVoice\" & date_PFX & ".txt").Write source_OBJ.Body
+  
         End If
         
         
         
     Rem bis hier sind die funktionen sehr ähnlich.
     Rem ___________________________________________________________________________________________________________
+    Rem Führe dies nur durch, wenn attachment vorhanden ist und es abgespeichert werden soll
         
-        If Not IsNoAttachment_FLAG Then
+        If Not IsNoAttachment_FLAG And execution_ARG > 1 Then
             myfilename_TXT = source_OBJ.Attachments.Item(1).FileName
         
     Rem der textFileFullPath liefert nur ohne den staging pfad
@@ -128,7 +155,6 @@ On Error GoTo Errorhandler
     Rem generell ist das eine gute Idee, aber für den Fall, daß das Attachment noch gezippt ist, wäre das problematisch.
     Rem der Textfileimport_wrapper betreibt eine eigene Stagingmatrix.
             If Right(myfilename_TXT, 3) = "txt" Then myfilename_TXT = resultvalue_OBJ.textFileGenerated_Path(workSlot_ARG, fileSequence_IDX, cr_DAT)
-        
             Call source_OBJ.Attachments.Item(1).SaveAsFile(myfilename_TXT)
         End If
 
@@ -137,17 +163,21 @@ On Error GoTo Errorhandler
     
 Errorhandler:
 
-        Debug.Print "edv_OutlookFilder_wrapper.source_OBJ.SenderName=" & source_OBJ.SenderName
+        If newMailInFolder_INT > 0 Then Debug.Print "edv_OutlookFilder_wrapper.source_OBJ.SenderName=" & source_OBJ.SenderName
+        If newMailInFolder_INT = 0 Then Call resultvalue_OBJ.newMail_FLAG(False)
+  
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.IsNoAttachment_FLAG=" & IsNoAttachment_FLAG
 
     If Err.Number <> 0 Then
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Number=" & Err.Number
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Description=" & Err.Description
-        Debug.Print "edv_OutlookFolder_wrapper.TextfileImportFromWorkslot.newMail_CNT=" & newMail_CNT
+        Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.SaveMailBody_FLAG=" & SaveMailBody_FLAG
+        Debug.Print "edv_OutlookFolder_wrapper.newMailInFolder_INT=" & newMailInFolder_INT
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.cr_DAT=" & cr_DAT
-        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.newMail_IDX=" & fileSequence_IDX & " out of " & newMail_CNT
+        Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.newMail_IDX=" & fileSequence_IDX & " out of " & newMailInFolder_INT
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.source_OBJ.Attachments.Count=" & source_OBJ.Attachments.Count
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.source_OBJ.Attachments.myfilename_TXT=" & myfilename_TXT
+        Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.UseTime_FLAG=" & UseTime_FLAG
     End If
 
     Set TextfileImportFromWorkslot = resultvalue_OBJ
@@ -381,11 +411,8 @@ Rem ____________________________________________________________________________
 Rem __________________________________________________________________________________
 
 
-Private Function FolderFromEventsource(domainindex_ARG As Integer) As Outlook.Folder
-'wer ruft diese Funktion eigentlich auf?
-'nur noch Intern:
-'MailSubjectFromDomain
-'kann also auch Private sein?
+Private Function FolderFromEventsource(domainIndex_ARG As Integer) As Outlook.Folder
+
 On Error GoTo Errorhandler
 
 Dim folder_OBJ As Outlook.Folder
@@ -403,7 +430,7 @@ Errorhandler:
 
     If Err.Number <> 0 Then
         Debug.Print "edv_OutlookFolder_wrapper.FolderFromEventsource.Err.Number=" & Err.Number
-        Debug.Print "edv_OutlookFolder_wrapper.FolderFromEventsource.domainindex_ARG=" & domainindex_ARG
+        Debug.Print "edv_OutlookFolder_wrapper.FolderFromEventsource.domainindex_ARG=" & domainIndex_ARG
         Debug.Print "edv_OutlookFolder_wrapper.FolderFromEventsource.myRootfolder.Name=" & myRootfolder.Name
         Debug.Print "edv_OutlookFolder_wrapper.FolderFromEventsource.returnvalue_OBJ.Name=" & returnvalue_OBJ.Name
         Debug.Print "edv_OutlookFolder_wrapper.FolderFromEventsource.returnvalue_OBJ.folder_cnt=" & folder_cnt
@@ -453,7 +480,7 @@ Set returnvalue_OBJ = Nothing
         
         If workSlot_ARG.IsWorkslotprefix(myWorkfolder.Name) Then
             Set returnvalue_OBJ = myWorkfolder
-            If (newMailsInFolder_INT < 0) Then newMailsInFolder_INT = newMailsInFolder_INT + returnvalue_OBJ.UnReadItemCount + workSlot_ARG.PresetFile_CNT
+            If (newMailInFolder_INT < 0) Then newMailInFolder_INT = returnvalue_OBJ.UnReadItemCount
             'newMailsInFolder_INT = returnvalue_OBJ.UnReadItemCount
             Exit For
             
@@ -466,10 +493,11 @@ Errorhandler:
 If Err.Number <> 0 Or debug_FLAG Then
     Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.Err.Number=" & Err.Number
     Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.Err.Description=" & Err.Description
+    Debug.Print "edv_OutlookFolder_wrapper.debug_FLAG=" & debug_FLAG
     Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.myRootfolder.Name=" & myRootfolder.Name
     Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.folder_cnt=" & folder_cnt
     Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.folderindex=" & folderindex
-    Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.newMailsInFolder_INT=" & newMailsInFolder_INT
+    Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.newMailInFolder_INT=" & newMailInFolder_INT
     Debug.Print "edv_OutlookFolder_wrapper.WorkslotFolder_OBJ.IsWorkslotprefix(" & myWorkfolder.Name & ")=" & workSlot_ARG.IsWorkslotprefix(myWorkfolder.Name)
 End If
     
@@ -483,6 +511,8 @@ End If
 End Function
 
 Private Function NewMailFromFolder(workfolder_ARG As Folder, Optional keepUnread_ARG As Boolean = False) As MailItem
+
+On Error GoTo Errorhandler
 Rem gibt ungelesene Mail aus Ordner zurück
 Rem wichtige und relevante funktion
 Rem wird von Textfileimport und von worksheetImport verwendet.
@@ -500,6 +530,12 @@ Rem wird von Textfileimport und von worksheetImport verwendet.
         
     End With
     Next objMail
+    
+Errorhandler:
+
+Debug.Print "Err.Number=" & Err.Number
+Debug.Print "Err.Description=" & Err.Description
+
 
 End Function
 
@@ -542,20 +578,29 @@ End Sub
 
 Private Sub Class_Initialize()
 On Error GoTo Errorhandler
-    user_NAME = "norman.gruener@telefonica.com"
+
+    Rem setzen der public variablen
+    moduleversion_INT = 4
+    newMailInFolder_INT = -1
     
+    Rem setzen der Steuerungsvariablen
+    
+    Rem setzen objektspezifischer variablen
+    user_NAME = "norman.gruener@telefonica.com"
     Set mySpace = Application.GetNamespace("MAPI")
 
     folderhierarchy_MTX(0) = "06_Datenbank"
     folderhierarchy_MTX(1) = "12_Eventsource"
-    newMailsInFolder_INT = -1
     
     Set myRootfolder = mySpace.Folders.Item(user_NAME).Folders.Item("Posteingang").Folders.Item(folderhierarchy_MTX(0)).Folders.Item(folderhierarchy_MTX(1))
     Set myWorkfolder = Nothing
     
+    Rem bei der Intialisierung weiss das Objekt noch nicht, welchen Workslot er erhalten wird.
+    Rem daher kann leider hier der Workfolder noch nicht bestimmt werden
     
 Errorhandler:
     If Err.Number <> 0 Then
+        Debug.Print Err.Number
         Debug.Print "edv_OutlookFolder_wrapper.folderhierarchy_MTX(1)=" & folderhierarchy_MTX(1)
         Debug.Print "edv_OutlookFolder_wrapper.myWorkfolder=" & "Nothing"
     End If
@@ -564,7 +609,5 @@ Errorhandler:
 End Sub
 
 Private Sub Class_Terminate()
-
-
 
 End Sub

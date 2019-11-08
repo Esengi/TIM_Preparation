@@ -1,2 +1,0 @@
-Write-Debug -Message "Get-ChildItem C:\Users\Public\Documents"
-Get-ChildItem C:\Users\Public\Documents | tee-object -filepath C:\Users\Public\Documents\inventur_ps.txt

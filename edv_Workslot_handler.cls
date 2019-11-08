@@ -8,10 +8,13 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
+
+
 Const version_INT As Integer = 2
 'Const debug_FLAG As Boolean = True
 Const debug_FLAG As Boolean = False
 
+Private domain_OBJ As New edv_Domain_handler
 
 'Die hierarchie durch gegenseitige Komposition errichten
 Private domainMatrix_TXT(10) As String
@@ -42,6 +45,7 @@ Public Sub debug_me()
 
         Debug.Print "edv_Workslot_handler.Class_Initialize.AddCategory=" & Workslotindex(0)
         Debug.Print "edv_Workslot_handler.Class_Initialize.AddCategory=" & AddCategory(5, 12)
+        Call AddDiscriminator(AB, 0)
 
 End Sub
 
@@ -73,7 +77,8 @@ End Function
 
 Public Function AddDiscriminator(discriminator_ARG As String, preset_ARG As Integer) As Integer
 'todo: in eine neue Klasse domain_handler auslagern
-    
+'todo: wer verwendet das zur Zeit?
+        
     discriminatorMatrix_TXT(Discriminator_CNT) = discriminator_ARG
     
     Discriminator_CNT = Discriminator_CNT + 1

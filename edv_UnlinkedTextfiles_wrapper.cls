@@ -12,8 +12,23 @@ Option Explicit
 
 Sub debug_me()
 
-Dim fileSystem_OBJ As New Scripting.FileSystemObject
-Dim textFile_OBJ As TextStream
+ 'Call test_indicateFile("07161620")
+ Call test_concatText
+
+End Sub
+
+Public Function IsExisting() As Boolean
+
+    IsExisting = True
+
+End Function
+
+
+Public Function test_indicateFile(dateTimePrefix_ARG As String) As Boolean
+'wer ruft das hier schon auf?
+
+Dim filesystem_OBJ As New Scripting.FileSystemObject
+Dim textfile_OBJ As TextStream
 Dim indexedTextFile_OBJ As TextStream
 
 Dim dateTimeText_IDX As String
@@ -26,29 +41,27 @@ Dim line_IDX As Integer
 
     scanner_PATH = "C:\Users\Public\Documents\106\"
     
-    dateTimeText_IDX = "27061353"
+    dateTimeText_IDX = dateTimePrefix_ARG
     
     unIndexedFile_NAME = dateTimeText_IDX & ".txt"
     indexedFile_NAME = dateTimeText_IDX & "_IDX.txt"
     line_IDX = 1
 
-    Set textFile_OBJ = fileSystem_OBJ.opentextfile(scanner_PATH & unIndexedFile_NAME)
-    Set indexedTextFile_OBJ = fileSystem_OBJ.CreateTextFile(scanner_PATH & indexedFile_NAME)
+    Set textfile_OBJ = filesystem_OBJ.opentextfile(scanner_PATH & unIndexedFile_NAME)
+    Set indexedTextFile_OBJ = filesystem_OBJ.CreateTextFile(scanner_PATH & indexedFile_NAME)
        
     Do
           
-        currentLine_TXT = textFile_OBJ.ReadLine
+        currentLine_TXT = textfile_OBJ.ReadLine
         
         If currentLine_TXT <> "" Then
             Call indexedTextFile_OBJ.WriteLine(dateTimeText_IDX & ":" & line_IDX & ":" & currentLine_TXT)
             line_IDX = line_IDX + 1
         End If
          
-    Loop Until textFile_OBJ.AtEndOfStream
+    Loop Until textfile_OBJ.AtEndOfStream
 
-End Sub
-
-
+End Function
 
 
 Sub test_concatText()
@@ -60,28 +73,26 @@ Sub test_concatText()
 
 On Error GoTo Errorhandler
 
-Dim fileSystem_OBJ As New Scripting.FileSystemObject
-Dim textFile_OBJ As TextStream
+Dim filesystem_OBJ As New Scripting.FileSystemObject
+Dim textfile_OBJ As TextStream
 
 Dim scanner_PATH As String
 Dim indexedFile_NAME As String
 
 
-    'scanner_PATH = "C:\Users\gruenern\OneDrive for Business\5041_SBGBGF\textfiles\"
-    'indexedFile_NAME = Dir(scanner_PATH & "*.txt")
     
-    scanner_PATH = "C:\Users\Public\Documents\106\"
-    unIndexedFile_NAME = "18060612.txt"
+    'methode über vba , nur bis zu einer bestimmten Dateigröße anwendbar
+    
 
 Debug.Print "indexedFile_NAME=" & indexedFile_NAME
 
     Do Until indexedFile_NAME = ""
     
-        Set textFile_OBJ = fileSystem_OBJ.opentextfile(scanner_PATH & indexedFile_NAME)
+        Set textfile_OBJ = filesystem_OBJ.opentextfile(scanner_PATH & indexedFile_NAME)
         
 Debug.Print "indexedFile_NAME=" & indexedFile_NAME
         
-        c02 = c02 & vbCrLf & textFile_OBJ.readall
+        c02 = c02 & vbCrLf & textfile_OBJ.readall
         indexedFile_NAME = Dir
     Loop
 

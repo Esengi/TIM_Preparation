@@ -10,73 +10,55 @@ Attribute VB_Exposed = False
 Option Explicit
 Rem verwendet VBA.FileSystem
 
-Private Const explorer_PFAD As String = "C:\Windows\explorer.exe"
-Private Const stagingRoot_PFAD As String = "C:\Users\Public\Documents\"
-Private Const oneDriveRoot_PFAD As String = "C:\Users\gruenern\OneDrive for Business\"
-Private workSlot_OBJ As New edv_Workslot_handler
+Private thisFileSystem_OBJ As FileSystemObject
+Private workslot_OBJ As New edv_Workslot_handler
 
 Private fullStaging_PFAD As String
 Private stagingFile_NAME(28) As String
 Private stagingFilesCount_INT As Integer
 
-'Private Const debug_FLAG As Boolean = False
-Private Const debug_FLAG As Boolean = True
+
+Private Const explorer_PFAD As String = "C:\Windows\explorer.exe"
+Private Const stagingRoot_PFAD As String = "C:\Users\Public\Documents\"
+Private Const oneDriveRoot_PFAD As String = "C:\Users\gruenern\OneDrive for Business\"
+Private Const debug_FLAG As Boolean = False
+'Private Const debug_FLAG As Boolean = True
 
 Rem -------------------------------------------------
 
 Public Sub debug_me()
 
-    Rem Testverzeichnisse
+    Dim filepfad As String
+    Dim file_NAME As String
+    
+    filepfad = stagingRoot_PFAD & "304_CT2020_FixedVoice\zipfiles"
+    file_NAME = stagingRoot_PFAD & "304_CT2020_FixedVoice\zipfiles\1909160000_RawData_CB_TE_WEEK.zip"
 
-    Dim filesystem_OBJ As New Scripting.FileSystemObject
-    Dim folder_OBJ As Scripting.Folder
-    Dim test_PATH As String
-    
-        
-    Rem zuweisungen
-    'test_PATH = oneDriveRoot_PFAD & "5041_SBGBGF\zipfiles"
-    test_PATH = oneDriveRoot_PFAD & "5051_CALL_Accessibility\textfiles"
-    
-    fullStaging_PFAD = test_PATH
-        
-Debug.Print "edv_FilesystemFolder_wrapper.debug_me"
-Debug.Print "edv_FilesystemFolder_wrapper.debug_FLAG=" & debug_FLAG
-Debug.Print "edv_FilesystemFolder_wrapper.debug_me.test_PATH=" & test_PATH
-    
-    'Call IsBatchRun("5041_SBGBGF.bat")
-    
-
-        
-    'Test mit existierendem Verzeichnis
-    Debug.Print "edv_FilesystemFolder_wrapper.IsExisting(\SBGBGF=" & IsExisting("C:\Users\Public\Documents\504_FBENCH_perfMonitoring\SBGBGF")
-    'Test mit existierendem Verzeichnis
-    Debug.Print "edv_FilesystemFolder_wrapper.IsExisting(\SBGBGF=" & IsExisting("C:\Users\Public\Documents\504_FBENCH_perfMonitoring\SBGBGF")
-    'Test mit NICHT existierendem Verzeichnis
-    Debug.Print "edv_FilesystemFolder_wrapper.IsExisting(\SBCBGF=" & IsExisting("C:\Users\Public\Documents\504_FBENCH_perfMonitoring\SBCBGF")
-    'Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH=" & staging_PATH
+    Debug.Print "thisFileSystem_OBJ.FileExists(filepfad)=" & thisFileSystem_OBJ.FileExists(file_NAME)
+    Debug.Print "thisFileSystem_OBJ.FileExists(filepfad)=" & thisFileSystem_OBJ.FileExists(filepfad)
+    Debug.Print "thisFileSystem_OBJ.FileExists(filepfad)=" & thisFileSystem_OBJ.GetFileName(filepfad & "\*")
 
 End Sub
 
 Rem -----------------------------------------------------
 
-Function IsExisting(path_ARG As String) As Boolean
+Public Function IsExisting(path_ARG As String) As Boolean
 Rem Funktion, die das Vorhandensein des Pfads prüft
-
+Rem oder eine Datei suchen kann?
 
 On Error GoTo Errorhandler
-
-    
+    Dim testFileName_TXT As String
     Dim resultvalue_FLAG As Boolean
 Rem initialisierungen
     resultvalue_FLAG = False
-        
-Rem Annahme, daß ein ChDir auf einen nicht vorhandenen
+    testFileName_TXT = ""
+    
+    Rem Annahme, daß ein ChDir auf einen nicht vorhandenen
 Rem Pfad zu einem Fehler führt
     VBA.FileSystem.ChDir (path_ARG)
 Rem Bei Fehler im ChDir werden die beiden folgenden Kommandos übersprungen
     fullStaging_PFAD = path_ARG
     resultvalue_FLAG = True
-    
 Errorhandler:
         
     IsExisting = resultvalue_FLAG
@@ -92,7 +74,7 @@ Errorhandler:
 
 End Function
 
-Public Function Staging_PATH() As String
+Public Function staging_PATH() As String
 
 On Error GoTo Errorhandler
 
@@ -108,19 +90,19 @@ Dim directoryname_TXT As String
   
 Errorhandler:
 
-If debug_FLAG Or Err.Number <> 0 Then
+    If debug_FLAG Or Err.Number <> 0 Then
 
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH()"
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.Err.Number=" & Err.Number
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.Err.Description=" & Err.Description
+    Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.debug_FLAG=" & debug_FLAG
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.resultvalue_TXT=" & resultvalue_TXT
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.fullStaging_PFAD=" & fullStaging_PFAD
     Debug.Print "edv_FilesystemFolder_wrapper.staging_PATH.directoryname_TXT=" & directoryname_TXT
     
-End If
+    End If
 
-Staging_PATH = resultvalue_TXT
-
+    staging_PATH = resultvalue_TXT
 
 End Function
 
@@ -135,7 +117,7 @@ End Function
 
 Rem -------------------------------------------------------------------------------------------
 
-Public Function FullStaging_PATH(workSlot_ARG As edv_Workslot_handler, Optional workSlotOnly_ARG As Boolean = False) As String
+Public Function FullStaging_PATH(workSlot_ARG As edv_Workslot_handler, Optional workSlotOnly_ARG As Boolean = False, Optional domainIndex_ARG As Integer = 0) As String
 Rem per Argument zu steuern, ob der workslot Pfad mit oder ohne unterpfad
 Rem zurückgegeben werden soll.
 On Error GoTo Errorhandler
@@ -143,33 +125,32 @@ On Error GoTo Errorhandler
     Dim resultvalue_TXT As String
 
     If fullStaging_PFAD = "" Or fullStaging_PFAD = "<emptyFilePath>" Then
-        fullStaging_PFAD = oneDriveRoot_PFAD & domainStaging_PFAD(workSlot_ARG, workSlotOnly_ARG)
+        fullStaging_PFAD = stagingRoot_PFAD & domainStaging_PFAD(workSlot_ARG, workSlotOnly_ARG, domainIndex_ARG)
     End If
 
     FullStaging_PATH = fullStaging_PFAD
 
 Errorhandler:
-
-    Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.debug_FLAG=" & debug_FLAG
-        If debug_FLAG Then
-    
-    
+   
+    If debug_FLAG Or Err.Number <> 0 Then
         Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH=" & Err.Number
-        Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH" & Err.Description
+        Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.Err.Description=" & Err.Description
+        Debug.Print "edv_FilesystemFolder_wrapper.debug_FLAG=" & debug_FLAG
         Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.workSlotOnly_ARG=" & workSlotOnly_ARG
         Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.workSlot_ARG.Discriminator_TXT(1)=" & workSlot_ARG.Discriminator_TXT(1)
         Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.workSlot_ARG.Domain_TXT(1)=" & workSlot_ARG.domain_TXT(1)
         Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.fullStaging_PFAD=" & fullStaging_PFAD
         Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.oneDriveRoot_PFAD=" & oneDriveRoot_PFAD
         Debug.Print "edv_FilesystemFolder_wrapper.FullStaging_PATH.domainStaging_PFAD()=" & domainStaging_PFAD(workSlot_ARG)
-
     End If
 
 End Function
 
 Rem -----------------------------------------------------------------------------------------------------------------------------------------
 
-Function IsBatchRun(scriptname_ARG As String) As Boolean
+Public Function IsBatchRun(scriptname_ARG As String) As Boolean
+Rem nicht besonders logisch, diese Funktion hier zu halten
+Rem aber wir lassen sie mal b.a.w. hier dring
 On Error GoTo Errorhandler
 
 Dim path_var As String
@@ -192,7 +173,8 @@ path_var = path_var & scriptname_ARG & " "
     
 Errorhandler:
 
-If Err.Number <> 0 Then
+If Err.Number <> 0 Or debug_FLAG Then
+
     Debug.Print "edv_FilesystemFolder_wrapper.IsBatchRun.Err.Description=" & Err.Description
     Debug.Print "edv_FilesystemFolder_wrapper.path_var=" & path_var
 End If
@@ -240,7 +222,7 @@ On Error Resume Next
 
 End Function
 
-Private Function domainStaging_PFAD(workSlot_ARG As edv_Workslot_handler, Optional workSlotOnly_ARG As Boolean = False) As String
+Private Function domainStaging_PFAD(workSlot_ARG As edv_Workslot_handler, Optional workSlotOnly_ARG As Boolean = False, Optional domainIndex_ARG As Integer = 0) As String
 Rem Domain entspricht dem "Diensteanbieter"
 Rem und schließt implizit nach der Geschäftslogik
 Rem den Workslot bzw. die Kategorien mit ein.
@@ -248,26 +230,33 @@ On Error GoTo Errorhandler
 
 Rem die Kategorie besteht aus Workslot und Diensteanbieternummer
 Dim kategorie_INT As Integer
+'das könnte auch eine globale Variable sein
+Dim domain_IDX As Integer
+'
 Dim resultvalue_TXT As String
+Dim root_PFAD As String
 Dim isDefault_FLAG As Boolean
 
 Const defaultResult_TXT As String = "5041_SBGBGF\"
 
-
     resultvalue_TXT = defaultResult_TXT
     isDefault_FLAG = True
-
+    Rem setzen der Kategorie als Suchstring
     kategorie_INT = workSlot_ARG.Workslotindex
+    domain_IDX = 1
+    If domainIndex_ARG > 1 Then domain_IDX = domainIndex_ARG
+    'hier eine Funktion, die aus kategorie und domain eine vierstellige Zahl macht?
 
-    VBA.FileSystem.ChDir (oneDriveRoot_PFAD & "\")
-    'VBA.FileSystem.ChDir (rawfile_PFAD)
+    root_PFAD = stagingRoot_PFAD & "\"
+
+    VBA.FileSystem.ChDir (root_PFAD)
     
-    resultvalue_TXT = Dir(oneDriveRoot_PFAD & "\" & kategorie_INT & "*", vbDirectory)
+    resultvalue_TXT = Dir(root_PFAD & "\" & kategorie_INT & "*", vbDirectory)
     isDefault_FLAG = False
     
     'If (fullStaging_PFAD = "") And (workSlot_ARG.Domain_TXT(1) <> "") Then
-    If (workSlot_ARG.domain_TXT(1) <> "") And Not workSlotOnly_ARG Then
-        resultvalue_TXT = resultvalue_TXT & "\" & workSlot_ARG.domain_TXT(1)
+    If (workSlot_ARG.domain_TXT(domain_IDX) <> "") And Not workSlotOnly_ARG Then
+        resultvalue_TXT = resultvalue_TXT & "\" & workSlot_ARG.domain_TXT(domain_IDX)
     End If
 
 Errorhandler:
@@ -276,10 +265,13 @@ Errorhandler:
     
     If debug_FLAG Or Err.Number <> 0 Or isDefault_FLAG Then
 
+        Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.debug_FLAG=" & debug_FLAG
         Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.Err.Number=" & Err.Number
         Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.Err.Description=" & Err.Description
         Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.isDefault_FLAG=" & isDefault_FLAG
         Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.oneDriveRoot_PFAD=" & oneDriveRoot_PFAD
+        Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.stagingRoot_PFAD=" & stagingRoot_PFAD
+        Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.root_PFAD=" & root_PFAD
         Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.resultvalue_TXT=" & resultvalue_TXT
         Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.workSlotOnly_ARG=" & workSlotOnly_ARG
         Debug.Print "edv_FilesystemFolder_wrapper.domainStaging_PFAD.kategorie_INT=" & kategorie_INT
@@ -303,16 +295,18 @@ End Function
 
 Private Sub Class_Initialize()
 
-fullStaging_PFAD = ""
+    fullStaging_PFAD = ""
 
-Debug.Print "edv_FilesystemFolder_wrapper.Class_Initialize"
-Debug.Print "edv_FilesystemFolder_wrapper.debug_FLAG=" & debug_FLAG
-If debug_FLAG Then
-    Debug.Print "edv_FilesystemFolder_wrapper.stagingRoot_PFAD=" & stagingRoot_PFAD
-    Debug.Print "edv_FilesystemFolder_wrapper.oneDriveRoot_PFAD=" & oneDriveRoot_PFAD
-    Debug.Print "edv_FilesystemFolder_wrapper.stagingFilesCount_INT=" & stagingFilesCount_INT
-    Debug.Print "edv_FilesystemFolder_wrapper.fullStaging_PFAD=" & fullStaging_PFAD
-End If
+    Set thisFileSystem_OBJ = CreateObject("scripting.filesystemobject")
+
+    Debug.Print "edv_FilesystemFolder_wrapper.Class_Initialize"
+    Debug.Print "edv_FilesystemFolder_wrapper.debug_FLAG=" & debug_FLAG
+    If debug_FLAG Then
+        Debug.Print "edv_FilesystemFolder_wrapper.stagingRoot_PFAD=" & stagingRoot_PFAD
+        Debug.Print "edv_FilesystemFolder_wrapper.oneDriveRoot_PFAD=" & oneDriveRoot_PFAD
+        Debug.Print "edv_FilesystemFolder_wrapper.stagingFilesCount_INT=" & stagingFilesCount_INT
+        Debug.Print "edv_FilesystemFolder_wrapper.fullStaging_PFAD=" & fullStaging_PFAD
+    End If
 
 End Sub
 

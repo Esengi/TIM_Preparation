@@ -12,12 +12,11 @@ Rem Shell können
 Rem Warum hier der Pfad zu "Program Files" auf Deutsch genannt werden MUSS
 Rem (sonst funktioniert das nicht)
 Rem ist mir noch immer nicht völlig verständlich
-'todo: in Github hochladen, wenn einigermaßen funktioniert
-    Const classVersion_DBL As Double = 2.3
+    Const classVersion_DBL As Double = 2.4
     Const programm_PFAD As String = "C:\Programme\7-zip\"
     Const programm_NAME As String = "7z.exe "
-    'Const debug_FLAG As Boolean = True
-    Const debug_FLAG As Boolean = False
+    Const debug_FLAG As Boolean = True
+    'Const debug_FLAG As Boolean = False
 Rem Variablen
 Rem 1) Pfad zur Ablage der gezippten Datei
 Rem die Stringvariable dient dem einfachen Cachen des Pfadnamens
@@ -64,7 +63,7 @@ Rem Wildcards or filenames with spaces must be quoted:
 Rem    "Dir\Program files\*"
 Rem     Dir\"Program files"\*
 Rem from https://sevenzip.osdn.jp/chm/cmdline/syntax.htm
-    
+ 'In zipFilePfad_TXT steckt ein Fehler!
     command_NAME = "e " & """" & zipFilePfad_TXT
     command_NAME = command_NAME & zipfile_NAME & """"
     
@@ -162,8 +161,9 @@ Errorhandler:
     
     If debug_FLAG Then
         
-    Debug.Print "mserv_zipFile_wrapper.debug_FLAG=" & debug_FLAG
-    Debug.Print "mserv_zipFile_wrapper.zipFilePfad_TXT.Right(zipFile_PFAD, 1)=" & Right(zipFile_PFAD, 1)
+        Debug.Print "mserv_zipFile_wrapper.debug_FLAG=" & debug_FLAG
+        Debug.Print "mserv_zipFile_wrapper.zipFilePfad_TXT=" & zipFilePfad_TXT
+        Debug.Print "mserv_zipFile_wrapper.zipFilePfad_TXT.Right(zipFile_PFAD, 1)=" & Right(zipFile_PFAD, 1)
     
     End If
     
@@ -173,16 +173,12 @@ End Function
 
 Private Function rawFilePfad_TXT() As String
 
-
-
     If rawfile_PFAD = "" Then
     
         rawfile_PFAD = rawFolder_OBJ.staging_PATH
         
     End If
-      
-
-      
+ 
     rawFilePfad_TXT = rawfile_PFAD
 
 End Function

@@ -13,7 +13,7 @@ Private Const defaultDatabase_PATH As String = "C:\Users\Public"
 Private Const defaultDatabase_NAME As String = "NQ2015-Eventsource.accdb"
 Private Const debug_PFAD As String = "C:\Users\Public\Documents\503_ORIONW\AMAZONDE\AMAZONDE-import.accdb"
 
-Private workSlot_OBJ As New edv_Workslot_handler
+Private workslot_OBJ As New edv_Workslot_handler
 'Private eventsource_OBJ As Access.Application
 'Private workspace_OBJ As Workspace
 'Private database_OBJ As Database
@@ -30,15 +30,15 @@ Private accdbValid_TXT As String
 Sub debug_me()
 
     ' debugTable_NAME As String = "AMAZONDE-import"
-    'todo: hier debuggen
-    Call workSlot_OBJ.Workslotindex(vbTuesday, 1)
+
+    Call workslot_OBJ.Workslotindex(vbTuesday, 1)
     
     Const debugTable_NAME As String = "170314.csv"
     Const debugPath_NAME As String = "C:\Users\Public\Documents\201_TITAN_connectreports\"
     
     databaseFull_PATH = "C:\Users\Public\Documents\201_TITAN_connectreports\TITANS-import.accdb"
     
-    Debug.Print GetTextlinkName(workSlot_OBJ, "C:\Users\Public\Documents\201_TITAN_connectreports", debugTable_NAME, "170314")
+    Debug.Print GetTextlinkName(workslot_OBJ, "C:\Users\Public\Documents\201_TITAN_connectreports", debugTable_NAME, "170314")
     
     'Debug.Print "TableDefIndex(" & debugTable_NAME & ")=" & TableDefIndex(debugTable_NAME)
 
@@ -116,7 +116,7 @@ End Function
 
 Private Function dataBaseFullPath() As String
 
-    Debug.Print workSlot_OBJ.Workslotindex
+    Debug.Print workslot_OBJ.Workslotindex
     dataBaseFullPath = "C:\Users\Public\Documents\201_TITAN_connectreports\TITANS-import.accdb"
 
 End Function
@@ -130,7 +130,7 @@ Dim specification_OBJ As ImportExportSpecification
 Dim resultvalue_TXT As String
 Dim var_TXT As String
 
-    Debug.Print workSlot_OBJ.Workslotindex
+    Debug.Print workslot_OBJ.Workslotindex
 
     resultvalue_TXT = "<unknown>"
     resultvalue_TXT = "4"
@@ -182,26 +182,26 @@ End If
 
 End Function
 
-Private Function WorkspaceByUser() As Workspace
-Rem Fehlerbehandlung weicht absichtlich von sonstigen Gepflogenheiten ab!
-
-On Error Resume Next
-
-    DefaultType = dbUseJet
-    Dim dev_user_OBJ As User
-    Debug.Print "In case of User level seucrity, please enter password!"
-    Set WorkspaceByUser = Nothing
-    Set WorkspaceByUser = eventsource_OBJ.DBEngine.CreateWorkspace("Eventsource_WSP", "Administrator", "acc")
-    Rem das hier ist absicht. Der erste Befehl schlägt zwar fehl, aber der zweite geht durch
-    Set WorkspaceByUser = eventsource_OBJ.DBEngine.CreateWorkspace("Eventsource_WSP", "admin", "acc")
-      
-    If Err.Number <> 0 Then
-        Debug.Print "Err.Number=" & Err.Number
-        Debug.Print "Err.Description=" & Err.Description
-        Debug.Print "WorkspaceByUser.Name=" & WorkspaceByUser.Name
-    End If
- 
-End Function
+'Private Function WorkspaceByUser() As Workspace
+'Rem Fehlerbehandlung weicht absichtlich von sonstigen Gepflogenheiten ab!
+'
+'On Error Resume Next
+'
+'    DefaultType = dbUseJet
+'    Dim dev_user_OBJ As User
+'    Debug.Print "In case of User level seucrity, please enter password!"
+'    Set WorkspaceByUser = Nothing
+'    Set WorkspaceByUser = eventsource_OBJ.DBEngine.CreateWorkspace("Eventsource_WSP", "Administrator", "acc")
+'    Rem das hier ist absicht. Der erste Befehl schlägt zwar fehl, aber der zweite geht durch
+'    Set WorkspaceByUser = eventsource_OBJ.DBEngine.CreateWorkspace("Eventsource_WSP", "admin", "acc")
+'
+'    If Err.Number <> 0 Then
+'        Debug.Print "Err.Number=" & Err.Number
+'        Debug.Print "Err.Description=" & Err.Description
+'        Debug.Print "WorkspaceByUser.Name=" & WorkspaceByUser.Name
+'    End If
+'
+'End Function
 
 Sub SetFormat(formatstring_ARG As String)
 

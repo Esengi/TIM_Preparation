@@ -17,7 +17,7 @@ Private user_NAME As String
 Private folderhierarchy_MTX(3) As String
 
 Rem ______________________________________________________________________
-Private workSlot_OBJ As New edv_Workslot_handler
+Private workslot_OBJ As New edv_Workslot_handler
 Private staging_OBJ As New edv_FilesystemFolder_wrapper
 Rem wird verwendet
 Private mySpace As Outlook.NameSpace
@@ -31,8 +31,8 @@ Private stagingFileName_TXT(28) As String
 Rem ______________________________________________________________________
 Rem Konstanten
 Private Const keepMailAsUnread As Boolean = True
-Private Const debug_FLAG As Boolean = True
-Private Const version_DBL = 3
+'Private Const debug_FLAG As Boolean = True
+Private Const debug_FLAG As Boolean = False
 Rem öffentliche Variablen
 Public moduleversion_INT As Integer
 Public newMailInFolder_INT As Integer
@@ -92,7 +92,7 @@ On Error GoTo Errorhandler
     Rem die steuerung dessen, was in dieser Funktion passiert, wird vom execution_ARG übernommen
     Rem execution_ARG = 0: nur auf neue Mails prüfen
     Rem execution_ARG = 1: auf neue Mails mit attachment prüfen
-    Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.execution_ARG=" & execution_ARG
+    
 
     Set resultvalue_OBJ = Nothing
 
@@ -169,8 +169,10 @@ Errorhandler:
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.IsNoAttachment_FLAG=" & IsNoAttachment_FLAG
 
     If Err.Number <> 0 Then
+    
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Number=" & Err.Number
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.Err.Description=" & Err.Description
+        Debug.Print "edv_OutlookFolder_wrapper.TextfileImportFromWorkslot.execution_ARG=" & execution_ARG
         Debug.Print "edv.OutlookFolder_wrapper.TextfileImportFromWorkslot.SaveMailBody_FLAG=" & SaveMailBody_FLAG
         Debug.Print "edv_OutlookFolder_wrapper.newMailInFolder_INT=" & newMailInFolder_INT
         Debug.Print "edv_OutlookFilder_wrapper.TextfileImportFromWorkslot.cr_DAT=" & cr_DAT
@@ -552,28 +554,7 @@ var_DBL = Shell(outlook_PFAD & "Outlook.exe", vbMaximizedFocus)
 
 End Sub
 
-Sub sendMessage(successmessage_ARG As String)
 
-    Rem Send a mail using the DoCmd.SendObject method
-    
-    Rem i need a Object for handling the new mail:
-    Dim newmail_OBJ As Object
-    
-    Rem i declare the Object to be a Mail Item:
-    Set newmail_OBJ = Application.CreateItem(olMailItem)
-    
-
-    Rem i set the important properties:
-    newmail_OBJ.To = "norman.gruener@telefonica.com"
-    newmail_OBJ.Subject = "twitter"
-    newmail_OBJ.Body = successmessage_ARG = successmessage_ARG & Chr(10)
-    
-    Rem i display it (optional, not necessary):
-    Call newmail_OBJ.Display
-    
-    Rem i send it:
-    Call newmail_OBJ.Send
-End Sub
 
 
 Private Sub Class_Initialize()
@@ -598,9 +579,11 @@ On Error GoTo Errorhandler
     Rem bei der Intialisierung weiss das Objekt noch nicht, welchen Workslot er erhalten wird.
     Rem daher kann leider hier der Workfolder noch nicht bestimmt werden
     
+    Debug.Print "edv_OutlookFolder_wrapper.debug_FLAG=" & debug_FLAG
+    
 Errorhandler:
     If Err.Number <> 0 Then
-        Debug.Print Err.Number
+        Debug.Print "edv_OutlookFolder_wrapper.Intitalize.Err.Number=" & Err.Number
         Debug.Print "edv_OutlookFolder_wrapper.folderhierarchy_MTX(1)=" & folderhierarchy_MTX(1)
         Debug.Print "edv_OutlookFolder_wrapper.myWorkfolder=" & "Nothing"
     End If
@@ -608,6 +591,3 @@ Errorhandler:
     
 End Sub
 
-Private Sub Class_Terminate()
-
-End Sub

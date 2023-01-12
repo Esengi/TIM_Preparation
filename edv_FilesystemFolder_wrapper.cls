@@ -21,7 +21,9 @@ Private stagingFilesCount_INT As Integer
 Private Const explorer_PFAD As String = "C:\Windows\explorer.exe"
 Private Const stagingRoot_PFAD As String = "C:\Users\Public\Documents\"
 Private Const oneDriveRoot_PFAD As String = "C:\Users\gruenern\OneDrive for Business\"
+Private Const moduleVersion_DBL As Double = 0.3
 Private Const debug_FLAG As Boolean = False
+
 'Private Const debug_FLAG As Boolean = True
 
 Rem -------------------------------------------------
@@ -43,7 +45,7 @@ End Sub
 Rem -----------------------------------------------------
 
 Public Function IsExisting(path_ARG As String) As Boolean
-Rem Funktion, die das Vorhandensein des Pfads prüft
+Rem Funktion, die das Vorhandensein des Pfads prÃ¼ft
 Rem oder eine Datei suchen kann?
 
 On Error GoTo Errorhandler
@@ -53,10 +55,10 @@ Rem initialisierungen
     resultvalue_FLAG = False
     testFileName_TXT = ""
     
-    Rem Annahme, daß ein ChDir auf einen nicht vorhandenen
-Rem Pfad zu einem Fehler führt
+    Rem Annahme, daÃŸ ein ChDir auf einen nicht vorhandenen
+Rem Pfad zu einem Fehler fÃ¼hrt
     VBA.FileSystem.ChDir (path_ARG)
-Rem Bei Fehler im ChDir werden die beiden folgenden Kommandos übersprungen
+Rem Bei Fehler im ChDir werden die beiden folgenden Kommandos Ã¼bersprungen
     fullStaging_PFAD = path_ARG
     resultvalue_FLAG = True
 Errorhandler:
@@ -119,7 +121,7 @@ Rem ----------------------------------------------------------------------------
 
 Public Function FullStaging_PATH(workSlot_ARG As edv_Workslot_handler, Optional workSlotOnly_ARG As Boolean = False, Optional domainIndex_ARG As Integer = 0) As String
 Rem per Argument zu steuern, ob der workslot Pfad mit oder ohne unterpfad
-Rem zurückgegeben werden soll.
+Rem zurÃ¼ckgegeben werden soll.
 On Error GoTo Errorhandler
 
     Dim resultvalue_TXT As String
@@ -224,13 +226,13 @@ End Function
 
 Private Function domainStaging_PFAD(workSlot_ARG As edv_Workslot_handler, Optional workSlotOnly_ARG As Boolean = False, Optional domainIndex_ARG As Integer = 0) As String
 Rem Domain entspricht dem "Diensteanbieter"
-Rem und schließt implizit nach der Geschäftslogik
+Rem und schlieÃŸt implizit nach der GeschÃ¤ftslogik
 Rem den Workslot bzw. die Kategorien mit ein.
 On Error GoTo Errorhandler
 
 Rem die Kategorie besteht aus Workslot und Diensteanbieternummer
 Dim kategorie_INT As Integer
-'das könnte auch eine globale Variable sein
+'das kÃ¶nnte auch eine globale Variable sein
 Dim domain_IDX As Integer
 '
 Dim resultvalue_TXT As String
